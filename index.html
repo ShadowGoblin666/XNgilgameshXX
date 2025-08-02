@@ -36,55 +36,67 @@
       transform: scale(1.05);
     }
 
-    #fullView {
+    /* نافذة العرض الكبيرة */
+    #overlay {
       display: none;
-      padding: 40px 20px;
-      max-width: 800px;
-      margin: auto;
-      background: rgba(255, 255, 255, 0.6);
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #fullView {
+      background: #fff;
+      padding: 30px;
+      max-width: 700px;
+      max-height: 80vh;
+      overflow-y: auto;
       border-radius: 20px;
-      box-shadow: 0 0 20px purple;
+      box-shadow: 0 0 25px purple;
       font-size: 22px;
       line-height: 2;
       color: black;
       white-space: pre-wrap;
+      position: relative;
     }
 
-    #copyBtn, #backBtn {
-      margin: 20px auto;
-      display: block;
-      padding: 10px 25px;
+    #copyBtn {
+      margin-top: 20px;
+      background-color: purple;
+      color: white;
       font-size: 18px;
+      padding: 10px 25px;
       border: none;
       border-radius: 10px;
       cursor: pointer;
     }
 
-    #copyBtn {
-      background-color: purple;
-      color: white;
-    }
-
-    #backBtn {
-      background-color: black;
-      color: yellow;
-    }
-
-    .fixed-back {
+    .home-btn {
       position: fixed;
       bottom: 20px;
-      left: 20px;
-      width: 60px;
-      height: 60px;
-      background-color: purple;
-      color: white;
+      right: 20px;
+      width: 70px;
+      height: 70px;
+      background-color: pink;
+      color: black;
+      font-size: 26px;
       border-radius: 50%;
-      font-size: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 0 15px violet;
+      text-decoration: none;
+      box-shadow: 0 0 15px yellow;
+      animation: pulse 2s infinite;
+      z-index: 1000;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 5px yellow; }
+      50% { box-shadow: 0 0 25px yellow; }
+      100% { box-shadow: 0 0 5px yellow; }
     }
 
     @media (max-width: 768px) {
@@ -99,21 +111,23 @@
 <!-- شبكة المربعات -->
 <div id="blogs"></div>
 
-<!-- عرض نص المدونة -->
-<div id="fullView">
-  <div id="blogText"></div>
-  <button id="copyBtn" onclick="copyBlogText()">📋 نسخ النص</button>
-  <button id="backBtn" onclick="showGrid()">🔙 رجوع إلى المربعات</button>
+<!-- مربع العرض وسط الشاشة -->
+<div id="overlay" onclick="hideOverlay(event)">
+  <div id="fullView" onclick="event.stopPropagation()">
+    <div id="blogText"></div>
+    <button id="copyBtn" onclick="copyBlogText()">📋 نسخ النص</button>
+  </div>
 </div>
 
-<!-- زر رجوع دائري ثابت -->
-<div class="fixed-back" onclick="showGrid()">⬅️</div>
+<!-- زر وردي أسفل يمين للرجوع إلى index.html -->
+<a href="index.html" class="home-btn" title="رجوع للرئيسية">🏠</a>
 
 <script>
   const blogFiles = ['blog1.txt', 'blog2.txt', 'blog3.txt'];
   const blogsContainer = document.getElementById('blogs');
-  const fullView = document.getElementById('fullView');
+  const overlay = document.getElementById('overlay');
   const blogText = document.getElementById('blogText');
+
   let allBlogs = [];
 
   async function loadBlogs() {
@@ -128,7 +142,7 @@
       }
     }
 
-    allBlogs.slice(0, 9).forEach((text, i) => {
+    allBlogs.slice(0, 9).forEach((text) => {
       const box = document.createElement('div');
       box.className = 'blog-box';
       box.innerText = text.substring(0, 60) + '...';
@@ -138,14 +152,12 @@
   }
 
   function showBlog(text) {
-    blogsContainer.style.display = 'none';
     blogText.innerText = text;
-    fullView.style.display = 'block';
+    overlay.style.display = 'flex';
   }
 
-  function showGrid() {
-    fullView.style.display = 'none';
-    blogsContainer.style.display = 'grid';
+  function hideOverlay(event) {
+    overlay.style.display = 'none';
   }
 
   function copyBlogText() {
@@ -158,3 +170,4 @@
 
 </body>
 </html>
+
